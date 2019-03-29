@@ -1,0 +1,33 @@
+#!/bin/bash
+
+if [ $# = 0 ]; then echo "I need an IP as an argument!"; exit 1; fi
+
+NUM_IPS=`wc -l /tmp/voipbl.txt | cut -f 1 -d ' '`
+NUM_SETS=$(( $NUM_IPS < 35000 ? 1 : ($NUM_IPS < 70000 ? 2 : ($NUM_IPS < 105000 ? 3 : 4)) ))
+
+	ipset -exist del voipbl $1 || true
+	if [[ $NUM_SETS -gt 1 ]] ; then
+	  ipset -exist del voipbl2 $1 || true
+	fi
+	if [[ $NUM_SETS -gt 2 ]] ; then
+	  ipset -exist del voipbl3 $1 || true
+	fi
+	if [[ $NUM_SETS -gt 3 ]] ; then
+	  ipset -exist del voipbl4 $1 || true
+	fi
+	
+	echo $1 >> /etc/fail2ban/voipbl-whitelist
+
+	count=`grep $1 /var/log/messages | wc -l`
+
+	if [ $count -eq 0 ] ; then count=1; fi
+
+	wget --no-verbose --tries=3 --waitretry=10 --connect-timeout=10 \
+              --read-timeout=60 --retry-connrefused --output-document=- \
+              --user-agent=Fail2Ban "http://www.voipbl.org/unban/?serial=XXXXXXXXXX&ip=$1&count=$count"
+
+	# these will be good until the next restart of fail2ban. Make sure this new ip gets into the fail2ban ignoreip!
+
+        fail2ban-client set asterisk-iptables addignoreip $1
+        fail2ban-client set asterisk-iptables unbanip $1
+
