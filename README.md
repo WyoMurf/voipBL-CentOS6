@@ -12,8 +12,8 @@ You can refer to the Fail2ban website for detailed instructions and advanced con
 
 # Step 2 Create the /etc/cron.d/voipbl file to update rules each 4 hours
 
-`
-# Every 4 hours
+
+`# Every 4 hours
 0 */4 * * *  root /usr/local/bin/voipbl.sh
 `
      (they had an extra * in the list, which gives an error, and the script is not called.)
@@ -31,7 +31,8 @@ But before anything else, Let me suggest a "better way". IPsets are built on top
 
 `target     prot opt source               destination         
 ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           state RELATED,ESTABLISHED 
-drop-rules-INPUT  all  --  0.0.0.0/0            0.0.0.0/0           `
+drop-rules-INPUT  all  --  0.0.0.0/0            0.0.0.0/0
+`
 
 The first rule takes advantage of the connection tracking mechanism to determine if the incoming packet is part of a established connection, or a related one, and immediately ACCEPTS the packet if so. You don't want to check the voipBL for every incoming RTP and SIP packet, do you? Really????
 
@@ -48,7 +49,8 @@ fail2ban-FTP  tcp  --  0.0.0.0/0            0.0.0.0/0           multiport dports
 fail2ban-apache-auth  tcp  --  0.0.0.0/0            0.0.0.0/0           multiport dports 80 match-set fail2ban-apache-auth src 
 fail2ban-SIP  all  --  0.0.0.0/0            0.0.0.0/0           match-set fail2ban-SIP src 
 fail2ban-SSH  tcp  --  0.0.0.0/0            0.0.0.0/0           multiport dports 22 match-set fail2ban-SSH src 
-fail2ban-recidive  all  --  0.0.0.0/0            0.0.0.0/0           match-set fail2ban-recidive src `
+fail2ban-recidive  all  --  0.0.0.0/0            0.0.0.0/0           match-set fail2ban-recidive src
+`
 
 You will note that all these rules are match-set rules, and if a match is made, you will jump to the indicated chain, which is basically just a log & drop operation:
 
