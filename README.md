@@ -7,11 +7,13 @@ Here we go:
 
 # Step 1 You must install Fail2ban on your server. 
 You can refer to the Fail2ban website for detailed instructions and advanced configurations.
+
    (no argument)
 
 # Step 2 Create the /etc/cron.d/voipbl file to update rules each 4 hours
 
 0 */4 * * *  root /usr/local/bin/voipbl.sh
+
      (they had an extra * in the list, which gives an error, and the script is not called.)
 
 # Step 3 The voipbl.sh Script
@@ -58,18 +60,21 @@ I may add other versions of voipbl.sh for other OS's that are not subject to the
 
 Also, I take a somewhat major departure from Graham Barnett's approach, by running a program to convert the /tmp/voipbl.txt file into the "save/restore" format of ipset, which explodes the entries that have a CIDR less than 32 into a list of entries that have a CIDR of 32. Once this file is formed, it is fed into an "ipset restore" command. I did this, because using "ipset add" for each voipbl entry is fairly slow-- the entire list takes 1.5 to 2 MINUTES to load the ipsets. Using the "ipset restore" only takes 2 SECONDS!!! I wrote the converter in "GO", which seems pretty random, but converting with a bash script takes about a half hour, and "GO" can be compiled on an Ubuntu system, and will run fine on CentOS6, with no "GO" installation on the server at all.
 
-# Step 4 Add a new action to your asterisk Jail on /etc/fail2ban/jail.conf (or jail.local, or whatever)
+# Step 4 Add a new action to your asterisk Jail
 Please NOTE that steps 4 and 5 send feedback about the ban you are instating back to voipbl. If you choose not to participate, then you skip steps 4 and 5, but... the world will not be a better place for this lack.
 
-Please note that the feedback mechanism back into voipbl for a local ban, will spread it all over the world, and back to you in another 4 hours (or whatever you set the update interval to). If you accidentally block one of your own IP's (and it happens every now and then) You should have some sort of local whitelisting mechanism to unban all your servers. This banned address will have to removed from all your own fail2bans, and added to your fail2ban ignoreip list, and the address also removed form the ipset for voipbl, and the unban sent up to voipbl. Hopefully it will be removed soon. Providing this whitelisting will NOT be covered in any detail here. At least not now.
+Please note that the feedback mechanism back into voipbl for a local ban, will spread it all over the world, and back to you in another 4 hours (or whatever you set the update interval to). If you accidentally block one of your own IP's (and it happens every now and then) You should have some sort of local whitelisting mechanism to unban all your servers. This banned address will have to removed from all your own fail2bans, and added to your fail2ban ignoreip list, and the address also removed from the ipset for voipbl, and the unban sent up to voipbl. Hopefully it will be removed soon. Providing this whitelisting mechanism will NOT be covered in any detail here. At least not now/yet. It gets kind of ... complicated
+
+In your /etc/fail2ban/jail.conf or jail.local (or whatever!):
 
 [asterisk-iptables]
 action   = iptables-allports[name=ASTERISK, protocol=all]
            voipbl[serial=XXXXXXXXXX]
 
 
-# Step 5 Now define the VoIP Blacklist actions for Fail2ban on /etc/fail2ban/action.d/voipbl.conf.
+# Step 5 Now define the VoIP Blacklist actions for Fail2ban
 
+Create the file /etc/fail2ban/action.d/voipbl.conf, copy the text below into it:
 
 [Definition]
 
