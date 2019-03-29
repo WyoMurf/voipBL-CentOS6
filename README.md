@@ -8,7 +8,22 @@ Here we go:
 ## Step 1 You must install Fail2ban on your server. 
 You can refer to the Fail2ban website for detailed instructions and advanced configurations.
 
-   (no argument)
+  I must add a caution here. We found that fail2ban (on CentOS, but maybe on other systems), for some strange reason, considers banned hosts as meeting the ESTABLISHED,RELATED criteria, and requires some extra attention.
+  
+  In the /etc/fail2ban/action.d/iptables-allports (or whatever actions you invoke on blocking):
+  
+```config
+actionban = ipset -exist --create raw-preroute iphash
+            ipset -exist --add raw-preroute <ip>
+            iptables -n -t raw -L PREROUTING | grep -q raw-preroute || iptables -t raw -I PREROUTING 1 -m set --match-set raw-preroute src -j NOTRACK
+            ipset -exist --add fail2ban-<name> <ip>
+
+
+actionunban = ipset -exist --del raw-preroute <ip>
+              ipset -exist --del fail2ban-<name> <ip>
+```
+
+Please note the ban action places a rule to stop connection tracking for a banned host, makes sure the ipset exists, and finally, adds the IP to the named fail2ban ipset. This will keep it from getting ESTABLISHED or RELATED status for further packets. Unban removes the entry from the raw-preroute ipset.
 
 ## Step 2 Create the /etc/cron.d/voipbl file to update rules each 4 hours
 
