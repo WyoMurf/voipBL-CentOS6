@@ -104,29 +104,35 @@ if [ $NUM_SETS -gt 3 ] ; then
 fi
 
 echo "Done. create match-set iptables rule, if not already existing..."
-  
+ 
+declare -i MS1=`iptables -n -L drop-rules-INPUT | grep -c 'voipbl src'`
+declare -i MS3=`iptables -n -L drop-rules-INPUT | grep -c 'voipbl3 src'`
+declare -i MS4=`iptables -n -L drop-rules-INPUT | grep -c 'voipbl4 src'`
+declare -i MS2=`iptables -n -L drop-rules-INPUT | grep -c 'voipbl2 src'`
+
+
 #Check if rule in iptables
-if ! $(/sbin/iptables --check drop-rules-INPUT -m set --match-set voipbl src -j voipBL > /dev/null 2>&1); then
+if [ $MS1 -lt 1 ] ; then
  /sbin/iptables -I drop-rules-INPUT 1 -m set --match-set voipbl src -j voipBL
  echo "Created match-set rule for voipbl"
 fi
 
 if [ $NUM_SETS -gt 1 ] ; then
-  if ! $(/sbin/iptables --check drop-rules-INPUT -m set --match-set voipbl2 src -j voipBL > /dev/null 2>&1); then
+  if [ $MS2 -lt 1 ] ; then
     /sbin/iptables -I drop-rules-INPUT 2 -m set --match-set voipbl2 src -j voipBL
     echo "Created match-set rule for voipbl2"
   fi
 fi
 
 if [ $NUM_SETS -gt 2 ] ; then
-  if ! $(/sbin/iptables --check drop-rules-INPUT -m set --match-set voipbl3 src -j voipBL > /dev/null 2>&1); then
+  if [ $MS3 -lt 1 ] ; then
     /sbin/iptables -I drop-rules-INPUT 3 -m set --match-set voipbl3 src -j voipBL
     echo "Created match-set rule for voipbl3"
   fi
 fi
 
 if [ $NUM_SETS -gt 3 ] ; then
-  if ! $(/sbin/iptables --check drop-rules-INPUT -m set --match-set voipbl4 src -j voipBL > /dev/null 2>&1); then
+  if [ $MS4 -lt 1 ] ; then
     /sbin/iptables -I drop-rules-INPUT 4 -m set --match-set voipbl4 src -j voipBL
     echo "Created match-set rule for voipbl4"
   fi
